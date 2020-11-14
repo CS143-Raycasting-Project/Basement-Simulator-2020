@@ -8,7 +8,11 @@
  * 
  *  This code may be found at https://github.com/CS143-Raycasting-Project/Raycast along with documentation.
  */
-
+import java.awt.Point;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 package raycast;
 
 public class Maze {
