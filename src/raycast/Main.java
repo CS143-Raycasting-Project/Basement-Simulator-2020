@@ -20,11 +20,13 @@ public class Main extends JFrame implements ActionListener {
     private static boolean left, right, backwards, forwards, turnLeft, turnRight, render = false; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
     static Timer keyTimer = new Timer(10, new Main()); //This is the clock of the game. It runs a tick every 10ms
     private static DrawScene scene = new DrawScene(200.0, 200.0); //Calls to the graphics function to draw the scene
-
+    public static int windowX = 400;
+    public static int windowY = 400;
     public static void main(String[] args) {
         //Pretty standard graphics setup
         JFrame f = new JFrame();
-        f.setSize(400,400);
+
+        f.setSize(windowX,windowY);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.addKeyListener(new KeyListener() { //This KeyListener is what allows movement inputs to be detected.
             //If a key is held down during the tick, then the corresponding movement boolean will be true.
