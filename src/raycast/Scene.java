@@ -1,4 +1,4 @@
-/*  
+/** 
  *  Title of project
  * 
  *  Date of completion
@@ -15,15 +15,15 @@ import java.awt.*;
 import javax.swing.*;
 
 @SuppressWarnings("serial")
-public class DrawScene extends JPanel {
+public class Scene extends JPanel {
     //Points were causing rounding issues, so I just made the coords 2 separate doubles.
     private double playerX;
     private double playerY;
     private int playerRotation = 0; //This is in degrees so that I can just use an int.
-    private Maze maze = new Maze(25, 25);
+    private Maze maze = new Maze(Main.mazeSize, Main.mazeSize);
     private int[][] mazeWalls = maze.getMaze();
 
-    public DrawScene(double x, double y) {
+    public Scene(double x, double y) {
         this.playerX = x;
         this.playerY = y;
     }
@@ -55,24 +55,24 @@ public class DrawScene extends JPanel {
     public void renderFrame() {
         repaint();
     }
-    
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         this.setBackground(Color.BLACK);
         Graphics2D g2d = (Graphics2D) g;
         // g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); /* We can turn this on later if necessary */
         g2d.setColor(Color.WHITE);
-        for (int i = 0; i < 25; i++) { //This displays the maze graphically
-            for (int j = 0; j < 25; j++) {
+        for (int i = 0; i < Main.mazeSize; i++) { //This displays the maze graphically
+            for (int j = 0; j < Main.mazeSize; j++) {
                 if (mazeWalls[i][j] == 1) {
-                    g2d.fillRect(j * 16, i * 16, 15, 15);
+                    g2d.fillRect(j * Main.cellSize, i * Main.cellSize, Main.cellSize - 1, Main.cellSize - 1);
                 }
             }
         }
         g2d.setColor(Color.RED);
-        g2d.rotate(Math.toRadians(playerRotation), (int)playerX + 8, (int)playerY + 8);
-        g2d.fillRect((int)playerX, (int)playerY, 16, 16);
-        g2d.drawLine((int)playerX + 8, (int)playerY + 8, (int)playerX + 8, (int)playerY - 8);
+        g2d.rotate(Math.toRadians(playerRotation), (int)playerX + Main.cellSize / 2, (int)playerY + Main.cellSize / 2);
+        g2d.fillRect((int)playerX, (int)playerY, Main.cellSize, Main.cellSize);
+        g2d.drawLine((int)playerX + Main.cellSize / 2, (int)playerY + Main.cellSize / 2, (int)playerX + Main.cellSize / 2, (int)playerY - Main.cellSize / 2);
     }
 
 }

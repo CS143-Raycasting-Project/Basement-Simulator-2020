@@ -1,4 +1,4 @@
-/*  
+/**  
  *  Title of project
  * 
  *  Date of completion
@@ -192,5 +192,9 @@ public class Maze {
 			}
 			System.out.println("");
 		}
-	}
+    }
+    
+    public int[][] getMaze() {
+        return framing;
+    }
 }

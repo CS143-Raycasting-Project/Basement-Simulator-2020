@@ -1,4 +1,4 @@
-/*  
+/** 
  *  Title of project
  * 
  *  Date of completion
@@ -17,16 +17,19 @@ import javax.swing.Timer;
 
 @SuppressWarnings("serial")
 public class Main extends JFrame implements ActionListener {
+    public static int mazeSize = 25;
+    public static int resolution = 400;
+    public static int cellSize = resolution / mazeSize;
     private static boolean left, right, backwards, forwards, turnLeft, turnRight, render = false; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
+    private static Scene scene = new Scene(200.0, 200.0); //Calls to the graphics function to draw the scene
     static Timer keyTimer = new Timer(10, new Main()); //This is the clock of the game. It runs a tick every 10ms
-    private static DrawScene scene = new DrawScene(200.0, 200.0); //Calls to the graphics function to draw the scene
     public static int windowX = 400;
     public static int windowY = 400;
     public static void main(String[] args) {
         //Pretty standard graphics setup
         JFrame f = new JFrame();
 
-        f.setSize(windowX,windowY);
+        f.setSize(windowX, windowY + 40); /* The 40 is for the window bar */
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.addKeyListener(new KeyListener() { //This KeyListener is what allows movement inputs to be detected.
             //If a key is held down during the tick, then the corresponding movement boolean will be true.
@@ -56,6 +59,7 @@ public class Main extends JFrame implements ActionListener {
         keyTimer.start();
 
     }
+    @Override
     public void actionPerformed(ActionEvent arg0) {
         //There are safeguards to prevent movement when opposing directions are being held, so that frames aren't unnecessarily rendered
         if (!(left && right)) {

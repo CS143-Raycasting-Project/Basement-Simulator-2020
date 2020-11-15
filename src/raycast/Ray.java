@@ -1,4 +1,4 @@
-/*  
+/**  
  *  Title of project
  * 
  *  Date of completion
