@@ -44,7 +44,6 @@ public class Ray {
         
         this.distanceRatioX = Math.abs(1/rayX);
         this.distanceRatioY = Math.abs(1/rayY);
-        findCollision();
     }
     
     //move along a single turf at a time and check if its a wall. if it is then return the adjusted euclidian distance. you cant use

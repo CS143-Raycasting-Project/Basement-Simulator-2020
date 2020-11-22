@@ -17,6 +17,9 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import java.awt.*;
+import java.awt.image.*;
+
 public class Maze {
     int x, y;
 	private Point[] walls; // this will be the array of points representing walls 
@@ -196,5 +199,30 @@ public class Maze {
     
     public int[][] getMaze() {
         return framing;
-    }
+	}
+	
+	/**
+	 * This will take the array generated for the maze and convert it into a BufferedImage that can be used to
+	 * render the minimap in the Scene class. The sides are padded with 8 cells so you just see walls on the
+	 * minimap when you get to the edge (otherwise the TextureMap would loop through and you'd see the other
+	 * side of the map)
+	 * @return a BufferedImage of the map for use in rendering a minimap
+	*/
+	public BufferedImage getMiniMap() {
+		BufferedImage miniMap = new BufferedImage(Main.windowX + Main.cellSize * 8, Main.windowX + Main.cellSize * 8, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = miniMap.createGraphics();
+		g2d.setColor(Color.WHITE);
+		g2d.fillRect(0, 0, miniMap.getWidth(), miniMap.getHeight());
+		g2d.setColor(Color.BLACK);
+		g2d.fillRect(Main.cellSize * 4, Main.cellSize * 4, Main.windowX, Main.windowX);
+		g2d.setColor(Color.WHITE);
+        for (int i = 0; i < framing.length; i++) {
+            for (int j = 0; j < framing.length; j++) {
+                if (framing[i][j] == 1) {
+                    g2d.fillRect(Main.cellSize * 4 + j * Main.cellSize, Main.cellSize * 4 + i * Main.cellSize, Main.cellSize, Main.cellSize);
+                }
+            }
+		}
+		return miniMap;
+	}
 }
