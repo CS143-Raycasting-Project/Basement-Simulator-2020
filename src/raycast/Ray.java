@@ -78,7 +78,7 @@ public class Ray {
                 playerTurfYIndex += nextStepY;
                 isYSideOfWall = true;
             }
-            if (Main.raymap.findTurfByIndex(playerTurfXIndex, playerTurfYIndex).turfType > 0) {//0's are floors, anything greater is a wall type
+            if (Scene.maze.findTurfByIndex(playerTurfXIndex, playerTurfYIndex).turfType > 0) {//0's are floors, anything greater is a wall type
                 //System.out.println("x "+playerTurfXIndex+" y "+playerTurfYIndex+" type "+Main.raymap.findTurfByIndex(playerTurfXIndex, playerTurfYIndex).turfType);
                 hit = true;
             }

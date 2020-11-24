@@ -24,7 +24,10 @@ public class Maze {
     int x, y;
 	private Point[] walls; // this will be the array of points representing walls 
 	public int[][] framing;
-	
+	private Turf[][] turfMap;
+	private int turfSize;//should be the CELL size, so that resolution/this = number of maze tiles
+    private Turf nullSpace;//if an atom goes out of bounds, it goes here. this is so that rays dont go on for 10000 iterations each time
+    public Turf[][] highLightedTurfs;
 	
 	/**
 	 * Creates a random maze with input dimensions(assumes shape is square for now)
@@ -40,8 +43,23 @@ public class Maze {
 		workHorse(x/2 - 10, y/2 - 10, 0);
 		workHorse(x/2 - 10, y/2 - 10, 0);
 		mazeDeprimer(framing);
+		this.turfMap = new Turf[x][y];
+        this.turfSize = Main.cellSize;
+		createTurfMap(x,y);
 	}
-	
+	/**
+	 * creates the live map of turfs from the generated int arrays
+	 * @param x
+	 * @param y
+	 */
+	private void createTurfMap (int x, int y) {
+		this.nullSpace = new Turf(-1000,-1000,10,1);
+		for (int i = 0; i < x; i++) {
+            for (int j = 0; j < y; j++) {
+                turfMap[i][j] = new Turf(i * turfSize, j * turfSize, turfSize, framing[i][j]);
+			}
+		}
+	}
 	/**
 	 * Starts with a point in the middle of the map and grows randomly (with certain constraints). 
 	 * Parameters such as the starting point, how many times you run workHorse, 
@@ -200,7 +218,18 @@ public class Maze {
     public int[][] getMaze() {
         return framing;
 	}
-	
+	/**
+	 * searches through TurfMap for the given turf. x and y cannot be the real graphical coordinates, divide them by cellSize
+	 */
+	public Turf findTurfByIndex(int x, int y) {
+        if (turfMap.length > x && x >= 0 && turfMap[0].length > y && y >= 0) {
+            turfMap[x][y].toggleSpecial();
+            return turfMap[x][y];
+        } else {
+            return nullSpace;
+        }
+    }
+
 	/**
 	 * This will take the array generated for the maze and convert it into a BufferedImage that can be used to
 	 * render the minimap in the Scene class. The sides are padded with 8 cells so you just see walls on the

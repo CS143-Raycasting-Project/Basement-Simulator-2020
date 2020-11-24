@@ -23,7 +23,6 @@ public class Main extends JFrame implements ActionListener {
     public static int cellSize = windowX / mazeSize;
     private static boolean left, right, backwards, forwards, turnLeft, turnRight, render = false; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
     private static Scene scene = new Scene(windowX / 2, windowY / 2); //Calls to the graphics function to draw the scene
-    public static RayMap raymap = new RayMap();
     static Timer keyTimer = new Timer(10, new Main()); //This is the clock of the game. It runs a tick every 10ms
     public static void main(String[] args) {
         //Pretty standard graphics setup
@@ -33,7 +32,7 @@ public class Main extends JFrame implements ActionListener {
         /* For whatever reason the same settings dont work for all of us, so each of us will get their own setSize bar and they comment it out 
         for everyone else, when you merge a pr dont worry about it, just set it to what works for you and dont touch the commented out ones.
         The 36 is for the window bar at the top */
-        // f.setSize(windowX + 16, windowY + 36); //what works for KYLER
+        //f.setSize(windowX + 16, windowY + 36); //what works for KYLER
         f.setSize(windowX, windowY + 36); // what works for NATHAN
         // f.setSize(windowX + 16, windowY + 36); // what works for MATT
         // f.setSize(windowX + 16, windowY + 36); // what works for DYLAN
