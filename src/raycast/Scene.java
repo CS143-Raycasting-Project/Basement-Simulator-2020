@@ -20,7 +20,7 @@ public class Scene extends JPanel {
     //Points were causing rounding issues, so I just made the coords 2 separate doubles.
     private double playerX;
     private double playerY;
-    private int playerRotation = 0; //This is in degrees so that I can just use an int.
+    public static int playerRotation = 0; //This is in degrees so that I can just use an int.
     public static Maze maze = new Maze(Main.mazeSize, Main.mazeSize);
     private static BufferedImage miniMap = maze.getMiniMap();
     private int[][] mazeWalls = maze.getMaze();
@@ -29,24 +29,48 @@ public class Scene extends JPanel {
         this.playerX = x;
         this.playerY = y;
     }
-    public void move(String direction) { //I use some simple trig here to change how the movement is done depending on rotation.
-        if (direction.equals("left")) {
-            playerX -= Math.cos(Math.toRadians(playerRotation));
-            playerY -= Math.sin(Math.toRadians(playerRotation));
+    public void move(Main.Movement direction) { //I use some simple trig here to change how the movement is done depending on rotation.
+        switch (direction) {
+            /** player degrees of rotation reference
+             * 
+             *     -135  -90  -45  
+             *    +-180   P    0
+             *     +135  +90  +45
+             */
+        case L:
+            Main.playerVector = rotateVector(180);
+            break;
+        case R:
+            Main.playerVector = rotateVector(0);
+            break;
+        case F:
+            Main.playerVector = rotateVector(-90);
+            break;
+        case B:
+            Main.playerVector = rotateVector(90);
+            break;
+        case BL:
+            Main.playerVector = rotateVector(135);
+            break;
+        case BR:
+            Main.playerVector = rotateVector(45);
+            break;
+        case FL:
+            Main.playerVector = rotateVector(-135);
+            break;
+        case FR:
+            Main.playerVector = rotateVector(-45);
+            break;
         }
-        else if (direction.equals("right")) {
-            playerX += Math.cos(Math.toRadians(playerRotation));
-            playerY += Math.sin(Math.toRadians(playerRotation));
-        }
-        else if (direction.equals("forwards")) {
-            playerX += Math.sin(Math.toRadians(playerRotation));
-            playerY -= Math.cos(Math.toRadians(playerRotation));
-        }
-        else if (direction.equals("backwards")) {
-            playerX -= Math.sin(Math.toRadians(playerRotation));
-            playerY += Math.cos(Math.toRadians(playerRotation));
-        }
-        
+        playerX += Main.playerVector[0];
+        playerY += Main.playerVector[1];
+    }
+
+    private static double[] rotateVector(double rotation) {
+        double[] rotatedVector = {0, 0}; // {x, y}
+        rotatedVector[0] = Main.moveSpeed * Math.cos(Math.toRadians(playerRotation + rotation));
+        rotatedVector[1] = Main.moveSpeed * Math.sin(Math.toRadians(playerRotation + rotation));
+        return rotatedVector;
     }
 
     public void rotate(int angle) {
