@@ -13,6 +13,7 @@ package raycast;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import javax.swing.*;
 
 @SuppressWarnings("serial")
@@ -22,6 +23,9 @@ public class Scene extends JPanel {
     private double playerY;
     public static int playerRotation = 0; //This is in degrees so that I can just use an int.
     public static Maze maze = new Maze(Main.mazeSize, Main.mazeSize);
+    private static Texture wallTexture = new Texture("assets" + File.separator + "textures" + File.separator + "RedCobblestoneWall.png", 1280);//Make sure your terminal is IN the Raycast folder
+    private static Texture startTexture = new Texture("assets" + File.separator + "textures" + File.separator + "RedCobblestoneDoor.png", 1280);
+    private static Texture exitTexture = new Texture("assets" + File.separator + "textures" + File.separator + "RedCobblestoneExit.png", 1280);
     private static BufferedImage miniMap = maze.getMiniMap();
     private int[][] mazeWalls = maze.getMaze();
     private int rayCastScreenPixelColumns = Main.windowX;
@@ -92,25 +96,39 @@ public class Scene extends JPanel {
         Ray pixel;
         double collision;
         int columnHeight;
+        int textureX;
+        int textureY;
+        int pixelColor;
+        Texture currentTexture = wallTexture; //When we have a designated start and end cell, this will have an if statement to display the textures for the start and end
+        BufferedImage screen = new BufferedImage(Main.windowX, Main.windowY, BufferedImage.TYPE_INT_RGB); //This will be used to render the walls pixel by pixel
+        Graphics s = screen.getGraphics();
+        //Sets the floor and ceiling to their colors
+        s.setColor(new Color(50, 50, 50));
+        s.fillRect(0, 0, Main.windowX, Main.windowY / 2);
+        s.setColor(Color.GRAY);
+        s.fillRect(0, Main.windowY / 2, Main.windowX, Main.windowY / 2);
         //This does the collision calculations and renders the scene in 3D
         for (int x = 0; x < rayCastScreenPixelColumns; x++) {
             double cameraX = 2 * x / (double)rayCastScreenPixelColumns - 1;
             pixel = new Ray(playerY / (double)Main.cellSize, playerX / (double)Main.cellSize, Math.toRadians(180-playerRotation), cameraX);
             collision = pixel.findCollision();
             //How tall the column of pixels will be at x. We use the inverse of the collision distance because as the distance increases,
-            //the height of the column should decrease. This is then multiplied by the window height and scaled by 10
-            columnHeight = (int)(1 / collision / Main.cellSize * Main.windowY * 10);
-            if(255 - (int)(collision * 15) >= 0) { //This if statement makes sure that the lowest brightness a color can be is black
-                g2d.setColor(new Color(255 - (int)(collision * 15), 0, 0));
+            //the height of the column should decrease. This is then multiplied by the window height and scaled by 40
+            columnHeight = (int)(1 / collision / Main.cellSize * Main.windowY * 30 * ((double)Main.windowX / 1280));
+            textureX = pixel.getWallX(currentTexture.size);
+            // System.out.println(textureX);
+            //This handles texture mapping by scaling the image down to the appropriate size for each pixel
+            for(int y = 0; y < columnHeight; y++) {
+                textureY = y * currentTexture.size / columnHeight;
+                if ((Main.windowY - columnHeight) / 2 + y >= 0 && (Main.windowY - columnHeight) / 2 + y <= Main.windowY - 1){
+                    pixelColor = currentTexture.pixels[textureX + textureY * currentTexture.size]; //I'd like to figure out how to decrease the brightness of a hex RGB value and use it for lighting
+                    screen.setRGB(x, (Main.windowY - columnHeight) / 2 + y, pixelColor);
+                }
             }
-            else {
-                g2d.setColor(Color.BLACK);
-            }
-            //This draws the column of pixels on the x value; it's on based on the distance from the collision
-            g2d.drawLine(x, Main.windowY / 2 - columnHeight, x, Main.windowY / 2 + columnHeight);
             //as of right now you need to switch x and y, i dont know why. you also need to subtract player rotation from 180 degrees
             //and turn it to radians
         }
+        g2d.drawImage(screen, null, 0, 0);
         g2d.setColor(Color.ORANGE);
 
         /*  THIS STUFF LOOKS LIKE A MESS. In reality, it's a bunch of graphical stuff, so there are a lot of numbers that help determine the scale
@@ -134,7 +152,7 @@ public class Scene extends JPanel {
         g2d.fillRect(Main.windowX / 5 / 2 + Main.windowX / 64 - Main.cellSize / 8, Main.windowX / 5 / 2 + Main.windowX / 64 - Main.cellSize / 8, Main.cellSize / 4, Main.cellSize / 4);
         //Used for timing the length it takes to render a frame
         double end = System.nanoTime();
-        //System.out.println((double)(end - start)/1000000); //with 4000 rays it should take between 0.8 and 1.3 MILLISECONDS per frame
+        // System.out.println((double)(end - start)/1000000); //with 4000 rays it should take between 0.8 and 1.3 MILLISECONDS per frame
     }
 
 }

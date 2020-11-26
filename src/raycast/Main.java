@@ -20,7 +20,7 @@ import javax.swing.Timer;
 @SuppressWarnings("serial")
 public class Main extends JFrame implements ActionListener {
     public static int mazeSize = 32;
-    public static int windowY = 1080; //Keep this at a standard round 16:9 resolution (144p, 360p, 450p, 720p, 1080p, etc.) but make sure it is smaller than your monitor resolution. (480p does not work because the width is actually fractional and just rounded up in real life)
+    public static int windowY = 720; //Keep this at a standard round 16:9 resolution (144p, 360p, 450p, 720p, 1080p, etc.) but make sure it is smaller than your monitor resolution. (480p does not work because the width is actually fractional and just rounded up in real life)
     public static int windowX = windowY * 16 / 9; //Sets the X of the window based on a 16:9 aspect ratio
     public static int cellSize = windowX / mazeSize;
     private static boolean left, right, backwards, forwards, turnLeft, turnRight, render = false; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
@@ -102,7 +102,7 @@ public class Main extends JFrame implements ActionListener {
             }
         }
         if (currentMove != null) {
-            System.out.println(Arrays.toString(playerVector) + "\t" + Scene.playerRotation);
+            // System.out.println(Arrays.toString(playerVector) + "\t" + Scene.playerRotation);
             scene.move(currentMove);
             currentMove = null;
             render = true;
