@@ -26,7 +26,10 @@ public class Main extends JFrame implements ActionListener {
     private static boolean left, right, backwards, forwards, turnLeft, turnRight, render = false; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
     private static Scene scene = new Scene(windowX / 2, (windowY) / 2); //Calls to the graphics function to draw the scene
     static Timer keyTimer = new Timer(10, new Main()); //This is the clock of the game. It runs a tick every 10ms
-    public static int moveSpeed = cellSize / 40;
+    private static int baseSpeed = cellSize / 20;
+    public static int moveSpeed = baseSpeed;
+    public static int crouchSpeed = baseSpeed / 2;
+    public static int runSpeed = baseSpeed * 2;
     public static int rotateSpeed = 2;
     enum Movement {
         FL, F, FR,
@@ -59,6 +62,9 @@ public class Main extends JFrame implements ActionListener {
                 else if (e.getKeyCode() == KeyEvent.VK_A)       { left      = true; }
                 else if (e.getKeyCode() == KeyEvent.VK_S)       { backwards = true; }
                 else if (e.getKeyCode() == KeyEvent.VK_D)       { right     = true; }
+
+                if      (e.getKeyCode() == KeyEvent.VK_SHIFT)   { moveSpeed = runSpeed; }
+                else if (e.getKeyCode() == KeyEvent.VK_CONTROL) { moveSpeed = crouchSpeed; }
             }
             public void keyTyped(KeyEvent e) { //Currently this isn't used, but this will be helpful for actions
 
@@ -70,6 +76,9 @@ public class Main extends JFrame implements ActionListener {
                 else if (e.getKeyCode() == KeyEvent.VK_A)        { left      = false; }
                 else if (e.getKeyCode() == KeyEvent.VK_S)        { backwards = false; }
                 else if (e.getKeyCode() == KeyEvent.VK_D)        { right     = false; }
+
+                if      (e.getKeyCode() == KeyEvent.VK_SHIFT)   { moveSpeed = baseSpeed; }
+                else if (e.getKeyCode() == KeyEvent.VK_CONTROL) { moveSpeed = baseSpeed; }
             }
         });
         f.add(scene);
