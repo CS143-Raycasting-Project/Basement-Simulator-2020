@@ -15,11 +15,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
-import java.util.Arrays;
 
 import javax.swing.*;
-import java.awt.image.DataBufferInt;
-import java.awt.color.*;
 
 @SuppressWarnings("serial")
 public class Scene extends JPanel {
@@ -31,14 +28,18 @@ public class Scene extends JPanel {
     private static Texture startTexture = new Texture("assets" + File.separator + "textures" + File.separator + "RedCobblestoneDoor.png", 1280);
     private static Texture exitTexture = new Texture("assets" + File.separator + "textures" + File.separator + "RedCobblestoneExit.png", 1280);
     private static BufferedImage miniMap = maze.getMiniMap();
+    private static Graphics miniMapGraphics = miniMap.getGraphics();
+    private static boolean newTile = true;
     private static BufferedImage screen = new BufferedImage(Main.windowX, Main.windowY, BufferedImage.TYPE_INT_RGB); //This will be used to render the walls pixel by pixel
     //I found this solution after setting each pixel individually with screen.setRGB() was way too slow. It links the screenPixel array directly to the screen's data, which is why it's faster
     private static int[] screenPixels = ((DataBufferInt)screen.getRaster().getDataBuffer()).getData(); 
     private int[][] mazeWalls = maze.getMaze();
-    private int rayCastScreenPixelColumns = Main.windowX;
+    private int rayCastScreenPixelColumns = Main.windowX; //We could probably remove this in the final version and just replace the references with Main.windowX
     private double lightDropOff;
+
     public Scene(double x, double y) {
         this.playerCoords = new double[] {x, y};
+        miniMapGraphics.setColor(Color.BLUE);
     }
     public void move(Main.Movement direction) { //I use some simple trig here to change how the movement is done depending on rotation.
         switch (direction) {
@@ -76,6 +77,10 @@ public class Scene extends JPanel {
         Main.playerVector = collisionChecked(playerCoords, Main.playerVector);
         playerCoords[0] += Main.playerVector[0];
         playerCoords[1] += Main.playerVector[1];
+        if (newTile) {
+            updateMiniMap();
+            newTile = false;
+        }
     }
 
     private static double[] rotateVector(double rotation) {
@@ -97,14 +102,26 @@ public class Scene extends JPanel {
         int futureXCell = (int) (coords[0] + vector[0]) / Main.cellSize;
         int currentYCell = (int) coords[1] / Main.cellSize;
         int futureYCell = (int) (coords[1] + vector[1]) / Main.cellSize;
+        boolean newXVisited = true;
+        boolean newYVisited = true;
 
-        if(Maze.findTurfByIndex((int) currentYCell, futureXCell).getType() == 1) {
+        if(maze.findTurfByIndex((int) currentYCell, futureXCell).getType() == 1) {
             //System.out.println("X Collision!");
             vector[0] = 0;
+            newXVisited = false;
         }
-        if(Maze.findTurfByIndex(futureYCell, currentXCell).getType() == 1) {
+        if(maze.findTurfByIndex(futureYCell, currentXCell).getType() == 1) {
             //System.out.println("Y Collision!");
             vector[1] = 0;
+            newYVisited = false;
+        }
+        // if(maze.findTurfByIndex(futureYCell, futureXCell).getType() == 1) { //This fixes the corner issue, but the player gets stuck on walls
+        //     //System.out.println("Y Collision!");
+        //     vector[0] = vector[1] = 0;
+        //     newYVisited = newXVisited = false;
+        // }
+        if (((currentXCell != futureXCell && newXVisited) || (currentYCell != futureYCell && newYVisited))) {
+            newTile = true;
         }
         return vector;
     }
@@ -116,6 +133,13 @@ public class Scene extends JPanel {
     public void renderFrame() {
         repaint();
     }
+
+    public void updateMiniMap() {
+        miniMapGraphics.fillRect(   (int)Math.floor(playerCoords[0] / Main.cellSize) * Main.cellSize + Main.cellSize * 4,
+                                    (int)Math.floor(playerCoords[1] / Main.cellSize) * Main.cellSize + Main.cellSize * 4,
+                                    Main.cellSize, Main.cellSize);
+    }
+
     @Override
     public void paintComponent(Graphics graphic) {
         //Used for timing the length it takes to render a frame
@@ -130,9 +154,8 @@ public class Scene extends JPanel {
         int columnHeight;
         int textureX;
         int textureY;
-        int pixelColor;
         Texture currentTexture = wallTexture; //When we have a designated start and end cell, this will have an if statement to display the textures for the start and end
-        Graphics s = screen.getGraphics();
+        Graphics s = screen.getGraphics(); //This is the graphic valiable responsible for drawing to the BufferedImage, not the actual window
         //Sets the floor and ceiling to their colors
         s.setColor(new Color(50, 50, 50));
         s.fillRect(0, 0, Main.windowX, Main.windowY / 2);
@@ -154,17 +177,20 @@ public class Scene extends JPanel {
             int endY = (columnHeight > Main.windowY) ? Main.windowY + (columnHeight - Main.windowY) / 2 : columnHeight;
             //the statement between the ? and the : is assigned if columnHeight > windowY, the statement to the right of the : is assigned if it isnt
 
-            for(int y = startY; y < endY; y++) {
+            for(int y = startY; y < endY; y++) { //Thank you for doing this. I was going to do it first thing because it annoyed me that there were separate loops
                 textureY = y * currentTexture.size / columnHeight;
                 int currentPixel = currentTexture.pixels[Math.max(textureX + textureY * currentTexture.size,0)];
-                int a = (int) (currentPixel >> 24) & 0xFF;
-                int r = (int) (((currentPixel >> 16) & 0xFF)); r -= Math.min(lightDropOff, r);
-                int b = (int) (((currentPixel >> 8) & 0xFF)); b -= Math.min(lightDropOff, b);
-                int g = (int) ((currentPixel & 0xFF)); g -= Math.min(lightDropOff, g);
-                //bit operations are evil, hexadecimal can be evil, therefore this is somewhere between evil and evil^2
-                //translates the integer inside of the current texture pixel into its component a,r,b,g values so we can darken them with distance
-                //they must be translated back to work
-                screenPixels[x + (y + (Main.windowY - columnHeight) /2 ) * Main.windowX] = (a << 24) | (r << 16) | (g << 8) | b;
+                if (collision > 2) { //I was having issues with lag, so I found that this fixed it. It was still going through the operation for every pixel even when the player was too close for it to matter
+                    int a = (int) (currentPixel >> 24) & 0xFF;
+                    int r = (int) (((currentPixel >> 16) & 0xFF)); r -= Math.min(lightDropOff, r);
+                    int b = (int) (((currentPixel >> 8) & 0xFF)); b -= Math.min(lightDropOff, b);
+                    int g = (int) ((currentPixel & 0xFF)); g -= Math.min(lightDropOff, g);
+                    //bit operations are evil, hexadecimal can be evil, therefore this is somewhere between evil and evil^2
+                    //translates the integer inside of the current texture pixel into its component a,r,b,g values so we can darken them with distance
+                    //they must be translated back to work
+                    currentPixel = (a << 24) | (r << 16) | (g << 8) | b;
+                }
+                screenPixels[x + (y + (Main.windowY - columnHeight) /2 ) * Main.windowX] = currentPixel;
             }
         }
         
@@ -192,7 +218,7 @@ public class Scene extends JPanel {
         g2d.fillRect(Main.windowX / 5 / 2 + Main.windowX / 64 - Main.cellSize / 8, Main.windowX / 5 / 2 + Main.windowX / 64 - Main.cellSize / 8, Main.cellSize / 4, Main.cellSize / 4);
         //Used for timing the length it takes to render a frame
         double end = System.nanoTime();
-        //System.out.println((double)(end - start)/1000000); //with 4000 rays it should take between 0.8 and 1.3 MILLISECONDS per frame
+        System.out.println((double)(end - start)/1000000); //with 4000 rays it should take between 0.8 and 1.3 MILLISECONDS per frame
     }
 
 }

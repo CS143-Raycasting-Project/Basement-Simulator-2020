@@ -27,7 +27,7 @@ public class Texture {
             texture.getRGB(0, 0, size, size, pixels, 0, size);
         }
         catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("You need the asset files!");
         }
     }
 

@@ -10,20 +10,14 @@
  */
 
 package raycast;
-import java.awt.Point;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
 
 public class Ray {
     private double x, y;
-    private double distanceRatioX, distanceRatioY, sideDistX, sideDistY, rayX, rayY, perpendicularVectX, perpendicularVectY, dirX, dirY;
+    private double distanceRatioX, distanceRatioY, sideDistX, sideDistY, rayX, rayY, perpendicularVectX, perpendicularVectY, dirX, dirY, angle;
     private int nextStepX, nextStepY, currentTurfXIndex, playerTurfYIndex;
     private boolean hit = false;
     private boolean isYSideOfWall;//this is true if the ray is moving up or down this tick, and false otherwise
     private double adjustedWallDist;
-    private Point pointOfImpact;
     private double collisionCoord;//this is the coordinate of the axis parallel to the wall
     //so many vars reeeeeeeee
     int squaresToCheck = 10000;//this is how many map squares each ray will go through until they give up (if they dont hit anything)
@@ -34,6 +28,7 @@ public class Ray {
         this.y = y;
         this.currentTurfXIndex = (int)x;//which map square we're in, X AND Y HAVE TO BE DIVIDED BY CELLSIZE WHEN YOU CALL THIS, DO NOT ROUND
         this.playerTurfYIndex = (int)y;
+        this.angle = angle;
 
         this.dirX = Math.cos(angle);//dir has a length of 1, so dirX is just the x value of a point on the unit circle
         this.dirY = Math.sin(angle);//dirY is the y value of a point on the unit circle
@@ -103,8 +98,9 @@ public class Ray {
      * returns the value for this ray's collision coordinate
      * @return
      */
-    public int getWallX(int textureSize) {
+    public int getWallX(int textureSize) { //TODO: Fix the way this reverses the texture on some walls
+        //This still isn't fixed and I need to find out why
         // System.out.println(collisionCoord % 1 * textureSize);
-        return (int)(collisionCoord % 1 * textureSize); //TODO: Fix the way this reverses the texture on some walls
+        return (int)(collisionCoord % 1 * textureSize);
     }
 } 

@@ -240,7 +240,7 @@ public class Maze {
 	 * searches through TurfMap for the given turf. x and y cannot be the real
 	 * graphical coordinates, divide them by cellSize
 	 */
-	public static Turf findTurfByIndex(int x, int y) {
+	public Turf findTurfByIndex(int x, int y) {
 		if (turfMap.length > x && x >= 0 && turfMap[0].length > y && y >= 0) {
 			turfMap[x][y].toggleSpecial();
 			return turfMap[x][y];

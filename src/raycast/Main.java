@@ -12,8 +12,6 @@
 package raycast;
 
 import java.awt.event.*;
-import java.util.Arrays;
-
 import javax.swing.*;
 import javax.swing.Timer;
 
@@ -23,7 +21,7 @@ public class Main extends JFrame implements ActionListener {
     public static int windowY = 720; //Keep this at a standard round 16:9 resolution (144p, 360p, 450p, 720p, 1080p, etc.) but make sure it is smaller than your monitor resolution. (480p does not work because the width is actually fractional and just rounded up in real life)
     public static int windowX = windowY * 16 / 9; //Sets the X of the window based on a 16:9 aspect ratio
     public static int cellSize = windowX / mazeSize;
-    private static boolean left, right, backwards, forwards, turnLeft, turnRight, render = false; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
+    private static boolean left, right, backwards, forwards, turnLeft, turnRight, render; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
     private static Scene scene = new Scene(windowX / 2, (windowY) / 2); //Calls to the graphics function to draw the scene
     static Timer keyTimer = new Timer(10, new Main()); //This is the clock of the game. It runs a tick every 10ms
     private static int baseSpeed = cellSize / 20;
