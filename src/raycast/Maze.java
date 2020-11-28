@@ -12,18 +12,18 @@
 package raycast;
 
 import java.awt.Point;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.awt.*;
 import java.awt.image.*;
 
 public class Maze {
-    int x, y;
-	private Point[] walls; // this will be the array of points representing walls 
-	public int[][] framing;
+	int[][] board; // memory for the maze. 1 = wall, 0 = ground
+	int[][] baseBoard; // sets the board up with a nice boarder. might be an easier way to do this
+	TreeSet<String> moveTracker = new TreeSet<>(); // keeps track of the moves at the recursion moves it's way through the board. when this is empty the aren't any more possible moves
+	
 	private static Turf[][] turfMap;
 	private int turfSize;// should be the CELL size, so that resolution/this = number of maze tiles
 	private static Turf nullSpace;// if an atom goes out of bounds, it goes here. this is so that rays dont go on
@@ -37,19 +37,186 @@ public class Maze {
 	 * @param y - y dimension of the maze
 	 */
 	public Maze(int x, int y) {
-		walls = new Point[x * y];
-		framing = new int[x][y];
-		mazePrimer(framing);
-		workHorse(x / 2, y / 2, 0);
-		workHorse(x / 2, y / 2, 0);
-		workHorse(x / 2 - 10, y / 2 - 10, 0);
-		workHorse(x / 2 - 10, y / 2 - 10, 0);
-		mazeDeprimer(framing);
+		board = new int[x - 2][y - 2];
+		baseBoard = new int[x][y];
+		for(int i = 0; i < board.length; i++) {
+			for(int j = 0; j < board.length; j++) {
+				board[i][j] = 1;
+			}
+		}
+		board[1][1] = 0;
+		moveTracker.add(intToString(1,1));
+		solve(board, moveTracker, intToString(0, 0));  
+		for(int i = 0; i < baseBoard.length; i++) {
+			for(int j = 0; j < baseBoard.length; j ++) {
+				if(i == 0 || i == baseBoard.length - 1 || j == 0 || j == baseBoard.length - 1) {
+					baseBoard[i][j] = 1;
+				}
+			}
+		}
+		for(int i = 0; i < board.length; i++) {
+			for(int j = 0; j < board.length; j++) {
+				baseBoard[i+1][j+1] = board[i][j];
+			}
+		}
+		
 		this.turfMap = new Turf[x][y];
 		this.turfSize = Main.cellSize;
 		createTurfMap(x, y);
 	}
 
+	private void solve(int[][] board, TreeSet<String> moveTracker, String currentMove) {
+		if(moveTracker.isEmpty()) { // base case. there are no more coordinates with viable moves
+			return;
+		}
+		
+		int[] xY = stringToInt(currentMove); 
+		int x = xY[0];
+		int y = xY[1];
+				
+		Map<String, Point> validMoveCollector = new TreeMap<>(); // collects valid moves from current position, to later choose from randomly
+		// possible left move
+		if(x-1 >= 0 && checkIfValid(board, x-1, y)) { // check if this spot adjacent to current x,y is valid
+			Point a = new Point(x-1, y);
+			validMoveCollector.put("a", a);
+		} 
+		// possible bottom move
+		if(y+1 < board.length && checkIfValid(board, x, y+1)) { // check if this spot adjacent to current x,y is valid
+			Point b = new Point(x, y+1);
+			validMoveCollector.put("b", b);
+
+		} 
+		// possible right move
+		if(x+1 < board.length && checkIfValid(board, x+1, y)) { // check if this spot adjacent to current x,y is valid
+			Point c = new Point(x+1, y);
+			validMoveCollector.put("c", c);
+		} 
+		// possible upper move
+		if(y-1 >= 0 && checkIfValid(board, x, y-1)) { // check if this spot adjacent to current x,y is valid
+			Point d = new Point(x, y-1);
+			validMoveCollector.put("d", d);
+		} 
+		if(validMoveCollector.size() == 0) {
+			moveTracker.remove(currentMove);
+			if(moveTracker.isEmpty()) {
+				return;
+			} else {
+				solve(board, moveTracker, moveTracker.last());
+				return;
+			}
+		}
+		
+		// This will iterate through the list of possible moves and choose one at random to move forward with
+		Random rand = new Random();
+		int theChosenOne = rand.nextInt(validMoveCollector.size());
+		String theChosenKey = "";
+		int loopCount = 0;
+		for(String key : validMoveCollector.keySet()) {
+			if (loopCount == theChosenOne) {
+				theChosenKey = key;
+			}
+			loopCount++;
+		}
+		
+		int newX = validMoveCollector.get(theChosenKey).x;
+		int newY = validMoveCollector.get(theChosenKey).y;
+
+		board[newX][newY] = 0; // sets the chosen coordinates at zero
+		moveTracker.add(intToString(newX, newY)); // adds this to the list with viable moves
+		solve(board, moveTracker, intToString(newX, newY)); // calls the method from the new chosen spot
+	}
+	
+	private int[] stringToInt(String s) {
+		int[] xAndY = new int[2];
+		String[] split = s.split(",");
+		xAndY[0] = Integer.parseInt(split[0]);
+		xAndY[1] = Integer.parseInt(split[1]);
+		return xAndY;
+	}
+	
+	private String intToString(int x, int y) {
+		String xAndY = "";
+		xAndY += x;
+		xAndY += ",";
+		xAndY += y;
+		return xAndY;
+	}
+	
+	private boolean checkIfValid(int[][] board, int x, int y) {
+		if(board[x][y] == 0) { // returns false as this spot is already alive
+			return false;
+		}
+		Map<Integer, Integer> xTracker = new TreeMap<>(); // keeps track of x neighbors in a line
+		Map<Integer, Integer> yTracker = new TreeMap<>(); // keeps track of y neighbors in a line
+		
+		int neighborCount = 0;
+		// up and to the left
+		if(x-1 >= 0 && y-1 >= 0 && board[x-1][y-1] == 0) {
+			neighborCount++;
+			xTracker.put(neighborCount, x-1);
+			yTracker.put(neighborCount, y-1);
+		}
+		// to the left
+		if(x-1 >= 0 && board[x-1][y] == 0) {
+			neighborCount++;
+			xTracker.put(neighborCount, x-1);
+			yTracker.put(neighborCount, y);
+		}
+		// down and to the left
+		if(x-1 >=0 && y+1 < board.length && board[x-1][y+1] == 0) {
+			neighborCount++;
+			xTracker.put(neighborCount, x-1);
+			yTracker.put(neighborCount, y+1);
+		}
+		// down
+		if(y+1 < board.length && board[x][y+1] == 0) {
+			neighborCount++;
+			xTracker.put(neighborCount, x);
+			yTracker.put(neighborCount, y+1);
+		}
+		// down and to the right
+		if(x+1 < board.length && y+1 < board.length && board[x+1][y+1] == 0) {
+			neighborCount++;
+			xTracker.put(neighborCount, x+1);
+			yTracker.put(neighborCount, y+1);
+		}
+		// right
+		if(x+1 < board.length && board[x+1][y] == 0) {
+			neighborCount++;
+			xTracker.put(neighborCount, x+1);
+			yTracker.put(neighborCount, y);
+		}
+		// up and to the right
+		if(x+1 < board.length && y-1 >= 0 && board[x+1][y-1] == 0) {
+			neighborCount++;
+			xTracker.put(neighborCount, x+1);
+			yTracker.put(neighborCount, y-1);
+		}
+		// up
+		if(y-1 >= 0 && board[x][y-1] == 0) {
+			neighborCount++;
+			xTracker.put(neighborCount, x);
+			yTracker.put(neighborCount, y-1);
+		}
+		if(neighborCount == 3 && xTracker.get(1) == xTracker.get(2) && xTracker.get(2) == xTracker.get(3)) { // if there are exactly 3 neighbors in a line (x-direction), this allows the maze to make a turn
+			return true;
+		}
+		if(neighborCount == 3 && yTracker.get(1) == yTracker.get(2) && yTracker.get(2) == yTracker.get(3)) { // if there are exactly 3 neighbors in a line (y-direction) , this allows the maze to make a turn
+			return true;
+		}
+		if(neighborCount > 2) {
+			return false;
+		} else {
+			return true;
+		}
+		
+	}
+	
+	
+	public int[][] getMaze() {
+		return baseBoard;
+	}
+	
 	/**
 	 * creates the live map of turfs from the generated int arrays
 	 * 
@@ -60,182 +227,11 @@ public class Maze {
 		this.nullSpace = new Turf(-1000, -1000, 10, 1);
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {
-				turfMap[i][j] = new Turf(i * turfSize, j * turfSize, turfSize, framing[i][j]);
+				turfMap[i][j] = new Turf(i * turfSize, j * turfSize, turfSize, baseBoard[i][j]);
 			}
 		}
 	}
-
-	/**
-	 * Starts with a point in the middle of the map and grows randomly (with certain
-	 * constraints). Parameters such as the starting point, how many times you run
-	 * workHorse, and variables in the wellnessCheck and pickANewPointer methods can
-	 * be changed to change the nature of the map produced.
-	 * 
-	 * @param x
-	 * @param y
-	 * @param count
-	 */
-	private void workHorse(int x, int y, int count) {
-		framing[x][y] = 0;
-		Point pointHolder = pickANewPointer(x, y);
-		if (count > 1000) {
-			return;
-		}
-		workHorse(pointHolder.x, pointHolder.y, count + 1);
-	}
-
-	/**
-	 * Sets the "outer rim" of the array of ints to 0 so the maze doesn't run off
-	 * the side
-	 * 
-	 * @param framing
-	 */
-	private void mazePrimer(int[][] framing) {
-		for (int i = 0; i < framing.length; i++) {
-			for (int j = 0; j < framing.length; j++) {
-				framing[i][j] = 1;
-			}
-		}
-		for (int i = 0; i < framing.length; i++) {
-			for (int j = 0; j < framing.length; j++) {
-				if ((i == 0 && j < framing.length) || (i < framing.length && j == 0)
-						|| (i == framing.length - 1 && j < framing.length)
-						|| (i < framing.length && j == framing.length - 1)) {
-					framing[i][j] = 0;
-				}
-			}
-		}
-	}
-
-	/**
-	 * sets the rim back to 1s, representing walls
-	 * 
-	 * @param framing
-	 */
-	public void mazeDeprimer(int[][] framing) {
-		for (int i = 0; i < framing.length; i++) {
-			for (int j = 0; j < framing.length; j++) {
-				if ((i == 0 && j < framing.length) || (i < framing.length && j == 0)
-						|| (i == framing.length - 1 && j < framing.length)
-						|| (i < framing.length && j == framing.length - 1)) {
-					framing[i][j] = 1;
-				}
-			}
-		}
-	}
-
-	/**
-	 * 
-	 * @param x coordinate in framing int[][] matrix
-	 * @param y coordinate in framing int[][] matrix
-	 * @return returns true if this coordinate has less than 4 living
-	 *         neighbors(adjacent coordinates turned to 1). Otherwise, returns false
-	 *         meaning this proposed coordinate is not available.
-	 * 
-	 */
-	private boolean wellnessCheck(int x, int y) {
-		Random rand = new Random();
-		int rando = rand.nextInt(5);
-		int living = 0;
-		if (framing[x - 1][y] == 0) { // left
-			living++;
-			if (living == rando)
-				return false;
-		}
-
-		if (framing[x][y + 1] == 0) { // lower
-			living++;
-			if (living == rando)
-				return false;
-		}
-
-		if (framing[x + 1][y] == 0) { // right
-			living++;
-			if (living == rando)
-				return false;
-		}
-
-		if (framing[x][y - 1] == 0) { // upper
-			living++;
-			if (living == rando)
-				return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Move the pointer to random and viable coordinate adjacent to the previous
-	 * pointer
-	 * 
-	 * @param x coordinate you are moving on from
-	 * @param y coordinate you are moving on from
-	 * @return a new pointer (point type)
-	 */
-	private Point pickANewPointer(int x, int y) {
-		Random rand = new Random();
-		Set<Point> viablePointers = new HashSet<>();
-		int viablePointerCount = 0;
-		Point p = new Point(x, y);
-
-		if (x - 1 > 0) {
-			if (wellnessCheck(x - 1, y)) {
-				viablePointerCount++;
-				Point p2 = new Point(x - 1, y);
-				viablePointers.add(p2);
-			}
-		}
-		if (y + 1 < framing.length - 1) {
-			if (wellnessCheck(x, y + 1)) {
-				viablePointerCount++;
-				Point p4 = new Point(x, y + 1);
-				viablePointers.add(p4);
-			}
-		}
-		if (x + 1 < framing.length - 1) {
-			if (wellnessCheck(x + 1, y)) {
-				viablePointerCount++;
-				Point p6 = new Point(x + 1, y);
-				viablePointers.add(p6);
-			}
-		}
-		if (y - 1 > 0) {
-			if (wellnessCheck(x, y - 1)) {
-				viablePointerCount++;
-				Point p8 = new Point(x, y - 1);
-				viablePointers.add(p8);
-			}
-		}
-		if (viablePointerCount > 0)
-			;
-		{
-			int rando = rand.nextInt(viablePointerCount + 1);
-			int loopCount = 0;
-			for (Point points : viablePointers) {
-				loopCount++;
-				if (loopCount == rando) {
-					p = points;
-				}
-			}
-		}
-		return p;
-	}
-
-	/**
-	 * Prints the array of integers representing the maze
-	 */
-	public void print() {
-		for (int i = 0; i < framing.length; i++) {
-			for (int j = 0; j < framing.length; j++) {
-				System.out.print(framing[i][j] + " ");
-			}
-			System.out.println("");
-		}
-	}
-
-	public int[][] getMaze() {
-		return framing;
-	}
-
+	
 	/**
 	 * searches through TurfMap for the given turf. x and y cannot be the real
 	 * graphical coordinates, divide them by cellSize
@@ -264,9 +260,9 @@ public class Maze {
 		g2d.setColor(Color.BLACK);
 		g2d.fillRect(Main.cellSize * 4, Main.cellSize * 4, Main.windowX, Main.windowX);
 		g2d.setColor(Color.WHITE);
-        for (int i = 0; i < framing.length; i++) {
-            for (int j = 0; j < framing.length; j++) {
-                if (framing[i][j] == 1) {
+        for (int i = 0; i < baseBoard.length; i++) {
+            for (int j = 0; j < baseBoard.length; j++) {
+                if (baseBoard[i][j] == 1) {
                     g2d.fillRect(Main.cellSize * 4 + j * Main.cellSize, Main.cellSize * 4 + i * Main.cellSize, Main.cellSize, Main.cellSize);
                 }
             }
