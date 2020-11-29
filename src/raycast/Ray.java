@@ -13,12 +13,13 @@ package raycast;
 
 public class Ray {
     private double x, y;
-    private double distanceRatioX, distanceRatioY, sideDistX, sideDistY, rayX, rayY, perpendicularVectX, perpendicularVectY, dirX, dirY, angle;
+    private double distanceRatioX, distanceRatioY, sideDistX, sideDistY, rayX, rayY, perpendicularVectX, perpendicularVectY, dirX, dirY;
     private int nextStepX, nextStepY, currentTurfXIndex, playerTurfYIndex;
     private boolean hit = false;
     private boolean isYSideOfWall;//this is true if the ray is moving up or down this tick, and false otherwise
     private double adjustedWallDist;
     private double collisionCoord;//this is the coordinate of the axis parallel to the wall
+    private int turfType;
     //so many vars reeeeeeeee
     int squaresToCheck = 10000;//this is how many map squares each ray will go through until they give up (if they dont hit anything)
     public Ray (double x, double y, double angle, double xColumn) {
@@ -28,7 +29,6 @@ public class Ray {
         this.y = y;
         this.currentTurfXIndex = (int)x;//which map square we're in, X AND Y HAVE TO BE DIVIDED BY CELLSIZE WHEN YOU CALL THIS, DO NOT ROUND
         this.playerTurfYIndex = (int)y;
-        this.angle = angle;
 
         this.dirX = Math.cos(angle);//dir has a length of 1, so dirX is just the x value of a point on the unit circle
         this.dirY = Math.sin(angle);//dirY is the y value of a point on the unit circle
@@ -78,10 +78,15 @@ public class Ray {
                 playerTurfYIndex += nextStepY;
                 isYSideOfWall = true;
             }
-            if (Scene.maze.findTurfByIndex(currentTurfXIndex, playerTurfYIndex).turfType > 0) {//0's are floors, anything greater is a wall type
+            turfType = Scene.maze.findTurfByIndex(currentTurfXIndex, playerTurfYIndex).turfType;
+            if (turfType > 0) {//0's are floors, anything greater is a wall type
                 //System.out.println("x "+currentTurfXIndex+" y "+playerTurfYIndex+" type "+Main.raymap.findTurfByIndex(currentTurfXIndex, playerTurfYIndex).turfType);
                 //System.out.println(collisionCoord);
                 hit = true;
+                if (!Scene.maze.findTurfByIndex(currentTurfXIndex, playerTurfYIndex).hasBeenSeen) {
+                    Scene.maze.findTurfByIndex(currentTurfXIndex, playerTurfYIndex).hasBeenSeen = true;
+                    Scene.drawWall(currentTurfXIndex, playerTurfYIndex);
+                }
             }
             iteration++;
         }
@@ -94,6 +99,7 @@ public class Ray {
         }
         return adjustedWallDist;
     }
+
     /**
      * returns the value for this ray's collision coordinate
      * @return
@@ -102,5 +108,9 @@ public class Ray {
         //This still isn't fixed and I need to find out why
         // System.out.println(collisionCoord % 1 * textureSize);
         return (int)(collisionCoord % 1 * textureSize);
+    }
+
+    public int getTurfType() {
+        return turfType;
     }
 } 

@@ -20,13 +20,13 @@ import java.awt.*;
 import java.awt.image.*;
 
 public class Maze {
-	int[][] board; // memory for the maze. 1 = wall, 0 = ground
-	int[][] baseBoard; // sets the board up with a nice boarder. might be an easier way to do this
-	TreeSet<String> moveTracker = new TreeSet<>(); // keeps track of the moves at the recursion moves it's way through the board. when this is empty the aren't any more possible moves
+	private int[][] board; // memory for the maze. 1 = wall, 0 = ground
+	private int[][] baseBoard; // sets the board up with a nice boarder. might be an easier way to do this
+	private TreeSet<String> moveTracker = new TreeSet<>(); // keeps track of the moves at the recursion moves it's way through the board. when this is empty the aren't any more possible moves
 	
-	private static Turf[][] turfMap;
+	private Turf[][] turfMap;
 	private int turfSize;// should be the CELL size, so that resolution/this = number of maze tiles
-	private static Turf nullSpace;// if an atom goes out of bounds, it goes here. this is so that rays dont go on
+	private Turf nullSpace;// if an atom goes out of bounds, it goes here. this is so that rays dont go on
 	// for 10000 iterations each time
 	public Turf[][] highLightedTurfs;
 
@@ -259,14 +259,6 @@ public class Maze {
 		g2d.fillRect(0, 0, miniMap.getWidth(), miniMap.getHeight());
 		g2d.setColor(Color.BLACK);
 		g2d.fillRect(Main.cellSize * 4, Main.cellSize * 4, Main.windowX, Main.windowX);
-		g2d.setColor(Color.WHITE);
-        for (int i = 0; i < baseBoard.length; i++) {
-            for (int j = 0; j < baseBoard.length; j++) {
-                if (baseBoard[i][j] == 1) {
-                    g2d.fillRect(Main.cellSize * 4 + j * Main.cellSize, Main.cellSize * 4 + i * Main.cellSize, Main.cellSize, Main.cellSize);
-                }
-            }
-		}
 		return miniMap;
 	}
 }

@@ -12,17 +12,17 @@
 package raycast;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
+import java.awt.image.*;
 import java.io.File;
 
+import javax.imageio.*;
 import javax.swing.*;
 
 @SuppressWarnings("serial")
 public class Scene extends JPanel {
     //Points were causing rounding issues, so I just made the coords 2 separate doubles.
     private double[] playerCoords; // {x, y}
-    public static int playerRotation = 0; //This is in degrees so that I can just use an int.
+    public static int playerRotation = 135; //This is in degrees so that I can just use an int.
     public static Maze maze = new Maze(Main.mazeSize, Main.mazeSize);
     private static Texture wallTexture = new Texture("assets" + File.separator + "textures" + File.separator + "RedCobblestoneWall.png", 1280);//Make sure your terminal is IN the Raycast folder
     private static Texture startTexture = new Texture("assets" + File.separator + "textures" + File.separator + "RedCobblestoneDoor.png", 1280);
@@ -30,16 +30,27 @@ public class Scene extends JPanel {
     private static BufferedImage miniMap = maze.getMiniMap();
     private static Graphics miniMapGraphics = miniMap.getGraphics();
     private static boolean newTile = true;
-    private static BufferedImage screen = new BufferedImage(Main.windowX, Main.windowY, BufferedImage.TYPE_INT_RGB); //This will be used to render the walls pixel by pixel
-    //I found this solution after setting each pixel individually with screen.setRGB() was way too slow. It links the screenPixel array directly to the screen's data, which is why it's faster
-    private static int[] screenPixels = ((DataBufferInt)screen.getRaster().getDataBuffer()).getData(); 
-    private int[][] mazeWalls = maze.getMaze();
+    private static BufferedImage wallRender = new BufferedImage(Main.windowX, Main.windowY, BufferedImage.TYPE_INT_ARGB); //This will be used to render the walls pixel by pixel
+    private static Graphics2D s = wallRender.createGraphics();
+    private static BufferedImage background; //This will grab the background asset to be used in rendering the floor and ceiling
+    private static BufferedImage resizedBackground = new BufferedImage(Main.windowX, Main.windowY, BufferedImage.TYPE_INT_RGB); //This will be used to resize the backgound to the window dimensions
+    //I found this solution after setting each pixel individually with wallRender.setRGB() was way too slow. It links the wallRenderPixel array directly to the wallRender's data, which is why it's faster
+    private static int[] wallRenderPixels = ((DataBufferInt)wallRender.getRaster().getDataBuffer()).getData();
+    // private int[][] mazeWalls = maze.getMaze(); //Currently unused. Not sure where it will be used, but I'll keep it for the time being
     private int rayCastScreenPixelColumns = Main.windowX; //We could probably remove this in the final version and just replace the references with Main.windowX
     private double lightDropOff;
 
     public Scene(double x, double y) {
         this.playerCoords = new double[] {x, y};
-        miniMapGraphics.setColor(Color.BLUE);
+        try {
+            background = ImageIO.read(new File("assets" + File.separator + "textures" + File.separator + "Background.png"));
+            Graphics2D g2d = resizedBackground.createGraphics();
+            g2d.drawImage(background, 0, 0, Main.windowX, Main.windowY, null);
+            g2d.dispose();
+        }
+        catch (Exception e) {
+
+        }
     }
     public void move(Main.Movement direction) { //I use some simple trig here to change how the movement is done depending on rotation.
         switch (direction) {
@@ -78,7 +89,7 @@ public class Scene extends JPanel {
         playerCoords[0] += Main.playerVector[0];
         playerCoords[1] += Main.playerVector[1];
         if (newTile) {
-            updateMiniMap();
+            drawPlayerPath();
             newTile = false;
         }
     }
@@ -105,17 +116,23 @@ public class Scene extends JPanel {
         boolean newXVisited = true;
         boolean newYVisited = true;
 
-        if(maze.findTurfByIndex((int) currentYCell, futureXCell).getType() == 1) {
+        if(maze.findTurfByIndex(currentYCell, futureXCell).getType() >= 1) {
             //System.out.println("X Collision!");
             vector[0] = 0;
             newXVisited = false;
+            if (maze.findTurfByIndex(currentYCell, futureXCell).getType() == 3) {
+                Main.gameOver();
+            }
         }
-        if(maze.findTurfByIndex(futureYCell, currentXCell).getType() == 1) {
+        if(maze.findTurfByIndex(futureYCell, currentXCell).getType() >= 1) {
             //System.out.println("Y Collision!");
             vector[1] = 0;
             newYVisited = false;
+            if (maze.findTurfByIndex(futureYCell, currentXCell).getType() == 3) {
+                Main.gameOver();
+            }
         }
-        // if(maze.findTurfByIndex(futureYCell, futureXCell).getType() == 1) { //This fixes the corner issue, but the player gets stuck on walls
+        // if(maze.findTurfByIndex(futureYCell, futureXCell).getType() >= 1) { //This fixes the corner issue, but the player gets stuck on walls
         //     //System.out.println("Y Collision!");
         //     vector[0] = vector[1] = 0;
         //     newYVisited = newXVisited = false;
@@ -134,10 +151,16 @@ public class Scene extends JPanel {
         repaint();
     }
 
-    public void updateMiniMap() {
+    public void drawPlayerPath() { //Draws the path of the player so they know where they've been
+        miniMapGraphics.setColor(Color.BLUE);
         miniMapGraphics.fillRect(   (int)Math.floor(playerCoords[0] / Main.cellSize) * Main.cellSize + Main.cellSize * 4,
                                     (int)Math.floor(playerCoords[1] / Main.cellSize) * Main.cellSize + Main.cellSize * 4,
                                     Main.cellSize, Main.cellSize);
+    }
+
+    public static void drawWall(int x, int y) { //Draws a wall on the minimap as soon as the player sees it
+        miniMapGraphics.setColor(Color.WHITE);
+        miniMapGraphics.fillRect(y * Main.cellSize + Main.cellSize * 4, x * Main.cellSize + Main.cellSize * 4, Main.cellSize, Main.cellSize);
     }
 
     @Override
@@ -154,19 +177,25 @@ public class Scene extends JPanel {
         int columnHeight;
         int textureX;
         int textureY;
-        Texture currentTexture = wallTexture; //When we have a designated start and end cell, this will have an if statement to display the textures for the start and end
-        Graphics s = screen.getGraphics(); //This is the graphic valiable responsible for drawing to the BufferedImage, not the actual window
-        //Sets the floor and ceiling to their colors
-        s.setColor(new Color(50, 50, 50));
-        s.fillRect(0, 0, Main.windowX, Main.windowY / 2);
-        s.setColor(Color.GRAY);
-        s.fillRect(0, Main.windowY / 2, Main.windowX, Main.windowY / 2);
+        Texture currentTexture; //When we have a designated start and end cell, this will have an if statement to display the textures for the start and end
+        s.setColor(new Color(0, 0, 0, 0));
+        s.setComposite(AlphaComposite.Src); //This resets the wallRender image to a new, completely transparent image
+        s.fillRect(0, 0, Main.windowX, Main.windowY);
         //This does the collision calculations and renders the scene in 3D
         for (int x = 0; x < rayCastScreenPixelColumns; x++) {
             double cameraX = 2 * x / (double)rayCastScreenPixelColumns - 1;
             pixel = new Ray(playerCoords[1] / (double)Main.cellSize, playerCoords[0] / (double)Main.cellSize, Math.toRadians(180-playerRotation), cameraX);
             collision = pixel.findCollision();
-            lightDropOff = collision * 5; //how much the brightness drops off as a unit of distance
+            if (pixel.getTurfType() == 1) {
+                currentTexture = wallTexture;
+            }
+            else if (pixel.getTurfType() == 2) {
+                currentTexture = startTexture;
+            }
+            else { //This may need to change in the future if we add more wall types
+                currentTexture = exitTexture;
+            }
+            lightDropOff = collision * 10; //how much the brightness drops off as a unit of distance
             //How tall the column of pixels will be at x. We use the inverse of the collision distance because as the distance increases,
             //the height of the column should decrease. This is then multiplied by the window height and scaled by 40
             columnHeight = (int)(1 / collision / Main.cellSize * Main.windowY * 30 * ((double)Main.windowX / 1280));
@@ -180,7 +209,7 @@ public class Scene extends JPanel {
             for(int y = startY; y < endY; y++) { //Thank you for doing this. I was going to do it first thing because it annoyed me that there were separate loops
                 textureY = y * currentTexture.size / columnHeight;
                 int currentPixel = currentTexture.pixels[Math.max(textureX + textureY * currentTexture.size,0)];
-                if (collision > 2) { //I was having issues with lag, so I found that this fixed it. It was still going through the operation for every pixel even when the player was too close for it to matter
+                if (collision > 2.5) { //I was having issues with lag, so I found that this fixed it. It was still going through the operation for every pixel even when the player was too close for it to matter
                     int a = (int) (currentPixel >> 24) & 0xFF;
                     int r = (int) (((currentPixel >> 16) & 0xFF)); r -= Math.min(lightDropOff, r);
                     int b = (int) (((currentPixel >> 8) & 0xFF)); b -= Math.min(lightDropOff, b);
@@ -190,11 +219,11 @@ public class Scene extends JPanel {
                     //they must be translated back to work
                     currentPixel = (a << 24) | (r << 16) | (g << 8) | b;
                 }
-                screenPixels[x + (y + (Main.windowY - columnHeight) /2 ) * Main.windowX] = currentPixel;
+                wallRenderPixels[x + (y + (Main.windowY - columnHeight) /2 ) * Main.windowX] = currentPixel;
             }
         }
-        
-        g2d.drawImage(screen, null, 0, 0);
+        g2d.drawImage(resizedBackground, null, 0, 0);
+        g2d.drawImage(wallRender, null, 0, 0);
         g2d.setColor(Color.ORANGE);
         
         /*  THIS STUFF LOOKS LIKE A MESS. In reality, it's a bunch of graphical stuff, so there are a lot of numbers that help determine the scale

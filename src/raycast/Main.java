@@ -22,12 +22,12 @@ public class Main extends JFrame implements ActionListener {
     public static int windowX = windowY * 16 / 9; //Sets the X of the window based on a 16:9 aspect ratio
     public static int cellSize = windowX / mazeSize;
     private static boolean left, right, backwards, forwards, turnLeft, turnRight, render; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
-    private static Scene scene = new Scene(windowX / 2, (windowY) / 2); //Calls to the graphics function to draw the scene
+    private static Scene scene = new Scene(cellSize * 1.5, cellSize * 1.5); //Calls to the graphics function to draw the scene
     static Timer keyTimer = new Timer(10, new Main()); //This is the clock of the game. It runs a tick every 10ms
-    private static int baseSpeed = cellSize / 20;
-    public static int moveSpeed = baseSpeed;
-    public static int crouchSpeed = baseSpeed / 2;
-    public static int runSpeed = baseSpeed * 2;
+    private static double baseSpeed = (double)cellSize / 35;
+    public static double moveSpeed = baseSpeed;
+    public static double crouchSpeed = baseSpeed / 1.5;
+    public static double runSpeed = baseSpeed * 1.5;
     public static int rotateSpeed = 2;
     enum Movement {
         FL, F, FR,
@@ -130,5 +130,11 @@ public class Main extends JFrame implements ActionListener {
             scene.renderFrame();
         }
         render = false;
+    }
+
+    public static void gameOver() {
+        System.out.println("You've completed the maze!");
+        keyTimer.stop();
+        System.exit(0); //This is temporary, we just don't have a win screen or menu yet
     }
 }

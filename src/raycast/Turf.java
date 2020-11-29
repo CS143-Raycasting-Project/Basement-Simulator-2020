@@ -19,6 +19,7 @@ public class Turf {
     public boolean isSpecial;
     public boolean isEmpty = true;
     public int turfType;
+    public boolean hasBeenSeen = false;
     /*
     each turf has a map of objects that are either fully or partially inside them and their locations
     objects tell RayMap their location every turn, RayMap figures out which turfs theyre a part of, then tells all of those turfs
