@@ -60,14 +60,17 @@ public class Maze {
 			}
 		}
 		
-		baseBoard[1][1] = 2; // sets the starting point to 1, 1 (upper left corner) which is where the maze grows from initially
+		baseBoard[0][1] = 2; // sets the starting point to 1, 1 (upper left corner) which is where the maze grows from initially
 		int endPoint = 0;
 		for(int i = 0; i < baseBoard.length; i++) { // finds the cell from the right wall that's closest to the bottom right corner
 			if (baseBoard[baseBoard.length - 2][i] == 0) {
 				endPoint = i;
 			}
 		}
-		baseBoard[baseBoard.length - 2][endPoint] = 3;
+		baseBoard[endPoint][baseBoard.length - 1] = 3;
+		
+		
+		
 		
 		this.turfMap = new Turf[x][y];
 		this.turfSize = Main.cellSize;
