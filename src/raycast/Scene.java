@@ -214,8 +214,8 @@ public class Scene extends JPanel {
                     textureY = y * currentTexture.size / columnHeight;
                     currentPixel = currentTexture.pixels[Math.max(textureY + textureX * currentTexture.size,0)];
                     r = (int) (((currentPixel >> 16) & 0xFF) * darkenDropOff);
-                    b = (int) (((currentPixel >> 8) & 0xFF) * darkenDropOff);
-                    g = (int) ((currentPixel & 0xFF) * darkenDropOff);
+                    g = (int) (((currentPixel >> 8) & 0xFF) * darkenDropOff);
+                    b = (int) ((currentPixel & 0xFF) * darkenDropOff);
                     //bit operations are evil, hexadecimal can be evil, therefore this is somewhere between evil and evil^2
                     //translates the integer inside of the current texture pixel into its component a,r,b,g values so we can darken them with distance
                     //they must be translated back to work
