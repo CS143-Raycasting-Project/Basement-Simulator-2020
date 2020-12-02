@@ -42,6 +42,7 @@ public class Scene extends JPanel {
 
     public Scene(double x, double y) {
         this.playerCoords = new double[] {x, y};
+        maze.findTurfByIndex((int)x/Main.cellSize,(int)y/Main.cellSize).turfType = 0;
         try {
             background = ImageIO.read(new File("assets" + File.separator + "textures" + File.separator + "Background.png"));
             Graphics2D g2d = resizedBackground.createGraphics();
