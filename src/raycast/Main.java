@@ -17,29 +17,32 @@ import javax.swing.Timer;
 
 @SuppressWarnings("serial")
 public class Main extends JFrame implements ActionListener {
-    public static int mazeSize = 32;
+    public static int mazeSize;
     public static int windowY = 720; //Keep this at a standard round 16:9 resolution (144p, 360p, 450p, 720p, 1080p, etc.) but make sure it is smaller than your monitor resolution. (480p does not work because the width is actually fractional and just rounded up in real life)
     public static int windowX = windowY * 16 / 9; //Sets the X of the window based on a 16:9 aspect ratio
-    public static int cellSize = windowX / mazeSize;
+    public static int cellSize;
+    public static int buttonHeight = windowY / 20;
+    public static int buttonWidth = windowX / 2;
     private static boolean left, right, backwards, forwards, turnLeft, turnRight, render; //These will be used for the movement, and render will be used to determine whether or not a freame needs to be rendered
-    private static Scene scene = new Scene(cellSize * 1.5, cellSize * 1.5); //Calls to the graphics function to draw the scene
+    public static boolean startMenu = true;
+    public static boolean difficultySet = false;
+    private static Scene scene = new Scene(); //Calls to the graphics function to draw the scene
     static Timer keyTimer = new Timer(10, new Main()); //This is the clock of the game. It runs a tick every 10ms
-    private static double baseSpeed = (double)cellSize / 35;
-    public static double moveSpeed = baseSpeed;
-    public static double crouchSpeed = baseSpeed / 1.5;
-    public static double runSpeed = baseSpeed * 1.5;
+    private static double baseSpeed;
+    public static double moveSpeed;
+    public static double crouchSpeed;
+    public static double runSpeed;
     public static int rotateSpeed = 2;
     enum Movement {
-        FL, F, FR,
-        L,      R,
-        BL, B, BR
+        FL, F, FR, //Front Left, Front, Front Right
+        L,      R, //Left,              Right
+        BL, B, BR  //Back Left,  Back,  Back Right
     }
     Movement currentMove;
     public static double[] playerVector = {0, 0}; // {x, y}
     public static void main(String[] args) {
         //Pretty standard graphics setup
         JFrame f = new JFrame();
-
         //This might be irrelevant now, btw. Say something in the group chat about it when you test it and find where you need to have the right border end to see the whole scene
         /* For whatever reason the same settings dont work for all of us, so each of us will get their own setSize bar and they comment it out 
         for everyone else, when you merge a pr dont worry about it, just set it to what works for you and dont touch the commented out ones.
@@ -64,7 +67,7 @@ public class Main extends JFrame implements ActionListener {
                 if      (e.getKeyCode() == KeyEvent.VK_SHIFT)   { moveSpeed = runSpeed; }
                 else if (e.getKeyCode() == KeyEvent.VK_CONTROL) { moveSpeed = crouchSpeed; }
             }
-            public void keyTyped(KeyEvent e) { //Currently this isn't used, but this will be helpful for actions
+            public void keyTyped(KeyEvent e) { //I will be adding a map button here to view a larger map later
 
             }
             public void keyReleased(KeyEvent e) { //If a key is released during the tick, then the corresponding movement boolean will be false.
@@ -79,16 +82,76 @@ public class Main extends JFrame implements ActionListener {
                 else if (e.getKeyCode() == KeyEvent.VK_CONTROL) { moveSpeed = baseSpeed; }
             }
         });
+        f.addMouseListener( new MouseListener() {
+            public void mousePressed(MouseEvent e) {
+                
+            }
+            public void mouseReleased(MouseEvent e) {
+                
+            }
+     
+            public void mouseEntered(MouseEvent e) {
+
+            }
+     
+            public void mouseExited(MouseEvent e) {
+                
+            }
+     
+            public void mouseClicked(MouseEvent e) { //Checks if ther mouse has clicked a button on screen
+                if (startMenu) {
+                    if (e.getX() >= Main.windowX / 4 && e.getX() <= Main.windowX * 3 / 4) {    
+                        if (difficultySet) {
+                            if (e.getY() >= Main.windowY / 2 + 36 && e.getY() <= Main.windowY / 2 + buttonHeight + 36) { //Easy
+                                mazeSize = 16;
+                                startGame();
+                            }
+                            else if (e.getY() >= Main.windowY / 2 + buttonHeight * 1.5 + 36 && e.getY() <= Main.windowY / 2 + buttonHeight * 2.5 + 36) { //Normal
+                                mazeSize = 20;
+                                startGame();
+                            }
+                            else if (e.getY() >= Main.windowY / 2 + buttonHeight * 3 + 36 && e.getY() <= Main.windowY / 2 + buttonHeight * 4 + 36) { //Hard
+                                mazeSize = 32;
+                                startGame();
+                            }
+                            else if (e.getY() >= Main.windowY / 2 + buttonHeight * 4.5 + 36 && e.getY() <= Main.windowY / 2 + buttonHeight * 5.5 + 36) { //Extreme
+                                mazeSize = 40;
+                                startGame();
+                            }
+                        }
+                        else if (startMenu && e.getY() >= Main.windowY * 2 / 3 + 36 && e.getY() <= Main.windowY * 2 / 3 + buttonHeight + 36) { //Start Button
+                            difficultySet = true;
+                            scene.renderFrame();
+                        }
+                    }
+                }
+            }
+        });
         f.add(scene);
         f.setResizable(false);
-        f.setVisible(true);
-        keyTimer.start();
-
+        f.setVisible(true);        
     }
+    
+    /**
+     * Sets the parameters necessary before the first frame of the game is rendered
+     */
+    public static void startGame() {
+        cellSize = windowX / mazeSize;
+        baseSpeed = (double)cellSize / 35;
+        moveSpeed = baseSpeed;
+        crouchSpeed = baseSpeed / 1.5;
+        runSpeed = baseSpeed * 1.5;
+        startMenu = false;
+        difficultySet = false;
+        render = true;
+        scene.start();
+        keyTimer.start();
+    }
+
     @Override
     public void actionPerformed(ActionEvent arg0) {
         //There are safeguards to prevent movement when opposing directions are being held, so that frames aren't unnecessarily rendered
-        if (!(left && right)) {
+        if (!(left && right) && !startMenu && !difficultySet) {
             if (left) {
                 currentMove = Movement.L;
             }
@@ -96,7 +159,7 @@ public class Main extends JFrame implements ActionListener {
                 currentMove = Movement.R;
             }
         }
-        if (!(forwards && backwards)) {
+        if (!(forwards && backwards) && !startMenu && !difficultySet) {
             if (forwards) {
                 if (currentMove == Movement.L) currentMove = Movement.FL;
                 else if (currentMove == Movement.R) currentMove = Movement.FR;
@@ -112,26 +175,23 @@ public class Main extends JFrame implements ActionListener {
             // System.out.println(Arrays.toString(playerVector) + "\t" + Scene.playerRotation);
             scene.move(currentMove);
             currentMove = null;
-            render = true;
         }
-        if (!(turnLeft && turnRight)) {
+        if (!(turnLeft && turnRight) && !startMenu && !difficultySet) {
             if (turnLeft) {
                 scene.rotate(-rotateSpeed);
-                render = true;
             }
             else if (turnRight) {
                 scene.rotate(rotateSpeed);
-                render = true;
             }
         }
-        //This makes sure that a frame is only rendered if the player has moved. It's just to reduce CPU load.
-        //Since there is nothing moving other than the player, it makes no sense to render the same screen repeatedly.
         if (render) {
             scene.renderFrame();
         }
-        render = false;
     }
 
+    /**
+     * Ends the game
+     */
     public static void gameOver() {
         System.out.println("You've completed the maze!");
         keyTimer.stop();

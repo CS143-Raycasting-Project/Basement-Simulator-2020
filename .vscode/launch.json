@@ -6,10 +6,19 @@
     "configurations": [
         {
             "type": "java",
+            "name": "CodeLens (Launch) - Main",
+            "request": "launch",
+            "mainClass": "raycast.Main",
+            "projectName": "Raycast_382f161a"
+        },
+        {
+            "type": "java",
             "name": "Debug (Launch) - Current File",
             "request": "launch",
             "mainClass": "${file}",
-            "vmArgs": ["-Dsun.java2d.opengl=true"]
+            "vmArgs": [
+                "-Dsun.java2d.opengl=true"
+            ]
         },
         {
             "type": "java",

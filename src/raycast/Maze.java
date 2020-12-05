@@ -23,7 +23,8 @@ public class Maze {
 	private int[][] board; // memory for the maze. 1 = wall, 0 = ground
 	private int[][] baseBoard; // sets the board up with a nice boarder. might be an easier way to do this
 	private TreeSet<String> moveTracker = new TreeSet<>(); // keeps track of the moves at the recursion moves it's way through the board. when this is empty the aren't any more possible moves
-	
+	private Point startPoint;
+	private Point endPoint;
 	private Turf[][] turfMap;
 	private int turfSize;// should be the CELL size, so that resolution/this = number of maze tiles
 	private Turf nullSpace;// if an atom goes out of bounds, it goes here. this is so that rays dont go on
@@ -61,6 +62,7 @@ public class Maze {
 		}
 		
 		baseBoard[0][1] = 2; // sets the starting point to 1, 1 (upper left corner) which is where the maze grows from initially
+		this.startPoint = new Point(1, 0);
 		int endPoint = 0;
 		for(int i = 0; i < baseBoard.length; i++) { // finds the cell from the right wall that's closest to the bottom right corner
 			if (baseBoard[baseBoard.length - 2][i] == 0) {
@@ -68,7 +70,7 @@ public class Maze {
 			}
 		}
 		baseBoard[endPoint][baseBoard.length - 1] = 3;
-		
+		this.endPoint = new Point(baseBoard.length - 1, endPoint);
 		
 		
 		
@@ -271,6 +273,12 @@ public class Maze {
 		g2d.fillRect(0, 0, miniMap.getWidth(), miniMap.getHeight());
 		g2d.setColor(Color.BLACK);
 		g2d.fillRect(Main.cellSize * 4, Main.cellSize * 4, Main.windowX, Main.windowX);
+		g2d.setColor(Color.RED); //Denotes the start of the map
+		g2d.fillRect((int)(Main.cellSize * 4 + Main.cellSize * startPoint.getX()), (int)(Main.cellSize * 4 + Main.cellSize * startPoint.getY()), Main.cellSize, Main.cellSize);
+		findTurfByIndex((int)startPoint.getY(), (int)startPoint.getX()).hasBeenSeen = true;
+		g2d.setColor(Color.GREEN); //Denotes the end of the map
+		g2d.fillRect((int)(Main.cellSize * 4 + Main.cellSize * endPoint.getX()), (int)(Main.cellSize * 4 + Main.cellSize * endPoint.getY()), Main.cellSize, Main.cellSize);
+		findTurfByIndex((int)endPoint.getY(), (int)endPoint.getX()).hasBeenSeen = true;
 		return miniMap;
 	}
 }

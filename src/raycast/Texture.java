@@ -14,8 +14,10 @@ package raycast;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
-import java.awt.image.*;
 
+/**
+ * Takes an asset image and divides it into a pixel array
+ */
 public class Texture {
     public int[] pixels;
     public int size;
