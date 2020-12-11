@@ -4,3 +4,4 @@ Carl made sure to create the most labyrinthine basement that he could, so make s
 
 Use WASD to move your character through the basement, and use the left and right arrow keys to turn.
 Navigate your way through the basement and reach the dark doorway that will be your exit. 
+Use shift to sprint, and use left control to slowdown in case you think you hear Carl.
