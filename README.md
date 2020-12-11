@@ -1,6 +1,6 @@
-# Raycast
-AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+Escape the basement of Carl the Deranged while he's vacationing in Yellowstone National Park!
 
-^ That's sort of how I feel trying to figure github out
+Carl made sure to create the most labyrinthine basement that he could, so make sure to listen to my instructions.
 
-Hello
+Use WASD to move your character through the basement, and use the left and right arrow keys to turn.
+Navigate your way through the basement and reach the dark doorway that will be your exit. 
